@@ -123,32 +123,32 @@ namespace ros2wrap {
                 // Publish output pointcloud
                 sensor_msgs::msg::PointCloud2 pc_ros;
                 pcl::toROSMsg(*loc.get_pointcloud(), pc_ros);
-                pc_ros.header.stamp = this->get_clock()->now();
+                pc_ros.header.stamp = msg.header.stamp;
                 pc_ros.header.frame_id = this->world_frame;
                 this->pc_pub->publish(pc_ros);
 
                 // Publish debugging pointclouds
                 sensor_msgs::msg::PointCloud2 orig_msg;
                 pcl::toROSMsg(*loc.get_orig_pointcloud(), orig_msg);
-                orig_msg.header.stamp = this->get_clock()->now();
+                orig_msg.header.stamp = msg.header.stamp;
                 orig_msg.header.frame_id = this->body_frame;
                 this->orig_pub->publish(orig_msg);
 
                 sensor_msgs::msg::PointCloud2 deskewed_msg;
                 pcl::toROSMsg(*loc.get_deskewed_pointcloud(), deskewed_msg);
-                deskewed_msg.header.stamp = this->get_clock()->now();
+                deskewed_msg.header.stamp = msg.header.stamp;
                 deskewed_msg.header.frame_id = this->world_frame;
                 this->desk_pub->publish(deskewed_msg);
 
                 sensor_msgs::msg::PointCloud2 match_msg;
                 pcl::toROSMsg(*loc.get_pc2match_pointcloud(), match_msg);
-                match_msg.header.stamp = this->get_clock()->now();
+                match_msg.header.stamp = msg.header.stamp;
                 match_msg.header.frame_id = this->body_frame;
                 this->match_pub->publish(match_msg);
 
                 sensor_msgs::msg::PointCloud2 finalraw_msg;
                 pcl::toROSMsg(*loc.get_finalraw_pointcloud(), finalraw_msg);
-                finalraw_msg.header.stamp = this->get_clock()->now();
+                finalraw_msg.header.stamp = msg.header.stamp;
                 finalraw_msg.header.frame_id = this->world_frame;
                 this->finalraw_pub->publish(finalraw_msg);
 
@@ -347,8 +347,9 @@ namespace ros2wrap {
             }
 
             void fromLimoToROS(const fast_limo::State& in, nav_msgs::msg::Odometry& out){
-                out.header.stamp = this->get_clock()->now();
-                out.header.frame_id = "map";
+                out.header.stamp = rclcpp::Time(static_cast<int64_t>(in.time * 1e9));
+                out.header.frame_id = this->world_frame;  // Fixed: Uses your YAML parameter
+                out.child_frame_id = this->body_frame;    // Fixed: Sets the child frame for the EKF
 
                 // Pose/Attitude
                 Eigen::Vector3d pos = in.p.cast<double>();
@@ -389,7 +390,7 @@ namespace ros2wrap {
             void broadcastTF(const fast_limo::State& in, std::string parent_name, std::string child_name, bool now){
 
                 geometry_msgs::msg::TransformStamped tf_msg;
-                tf_msg.header.stamp    = (now) ? this->get_clock()->now() : rclcpp::Time(in.time);
+                ttf_msg.header.stamp = rclcpp::Time(static_cast<int64_t>(in.time * 1e9));
                 /* NOTE: depending on IMU sensor rate, the state's stamp could be too old, 
                     so a TF warning could be print out (really annoying!).
                     In order to avoid this, the "now" argument should be true.
