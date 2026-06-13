@@ -390,7 +390,7 @@ namespace ros2wrap {
             void broadcastTF(const fast_limo::State& in, std::string parent_name, std::string child_name, bool now){
 
                 geometry_msgs::msg::TransformStamped tf_msg;
-                ttf_msg.header.stamp = rclcpp::Time(static_cast<int64_t>(in.time * 1e9));
+                tf_msg.header.stamp = rclcpp::Time(static_cast<int64_t>(in.time * 1e9));
                 /* NOTE: depending on IMU sensor rate, the state's stamp could be too old, 
                     so a TF warning could be print out (really annoying!).
                     In order to avoid this, the "now" argument should be true.
